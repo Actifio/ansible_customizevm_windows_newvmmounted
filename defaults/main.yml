@@ -1,0 +1,71 @@
+---
+# defaults file for ansible_customize_winvm_newvmmounted
+
+# vCenter Server IP
+vc_server_ip: ''
+
+# vCenter User Name
+vc_username: ''
+
+# vCenter Password
+vc_password: ''
+
+# vCenter Access Validates Certification
+vc_validate_certs: false
+
+# Datacenter Name belonging target VM
+tgt_datacenter: ''
+
+# Target VM Name
+tgt_vm_name: ''
+
+# Resource Pool Name should be belonged
+tgt_resource_pool: ''
+
+# Source VM Windows Administrator User Name
+vmwin_adminuser: 'Administrator'
+
+# Source VM Windows Administrator Password
+vmwin_adminpassword: ''
+
+# Source VM Windows PowerShell Path
+vmwin_powershellpath: 'C:\Windows\System32\WindowsPowershell\v1.0\powershell.exe'
+
+# Sysprep Response File
+vmwin_sysprep_rspfile: ''
+
+# Source VM Windows Ethernet Adapter Alias Name
+vmwin_ethernet_alias: ''
+
+# Original VM Windows IP Address
+vmwin_org_ip_address: ''
+
+# Original VM Windows Netmask Length
+vmwin_org_ip_prefixlength: ''
+
+# Original VM Windows Gateway
+vmwin_org_ip_gateway: ''
+
+# New VM Windows IP Address
+vmwin_ip_address: ''
+
+# New VM Windows Netmask Length
+vmwin_ip_prefixlength: ''
+
+# New VM Windows Gateway
+vmwin_ip_gateway: ''
+
+# Target VM Network Name
+tgt_vm_network: ''
+
+# Joining AD Domain Name
+vmwin_ad_domain: ''
+
+# Joining AD Administrator User
+vmwin_ad_adminuser: ''
+
+# Joining AD Administrator Password
+vmwin_ad_adminpassword: ''
+
+# New VM Windows License Key
+vmwin_license_key: ''

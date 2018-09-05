@@ -1,0 +1,222 @@
+---
+
+# Pre-Flight check for valiable consistency
+- fail:
+    msg: the variable "{{ item }}" should be defined.
+  when: item == ''
+  with_items:
+    - "{{ vc_server_ip }}"
+    - "{{ vc_username }}"
+    - "{{ vc_password }}"
+    - "{{ tgt_datacenter }}"
+    - "{{ tgt_vm_name }}"
+    - "{{ tgt_vm_network }}"
+    - "{{ vmwin_adminpassword }}"
+    - "{{ vmwin_ethernet_alias }}"
+    - "{{ vmwin_org_ip_address }}"
+    - "{{ vmwin_org_ip_prefixlength }}"
+    - "{{ vmwin_org_ip_gateway }}"
+    - "{{ vmwin_ip_address }}"
+    - "{{ vmwin_ip_prefixlength }}"
+    - "{{ vmwin_ip_gateway }}"
+
+# Move VM to Resource Pool if necessary
+- name: move vm to resource pool using vmware_guest module
+  vmware_guest:
+    hostname: "{{ vc_server_ip }}"
+    username: "{{ vc_username }}"
+    password: "{{ vc_password }}"
+    validate_certs: "{{ vc_validate_certs }}"
+    datacenter: "{{ tgt_datacenter }}"
+    name: "{{ tgt_vm_name }}"
+    resource_pool: "{{ tgt_resource_pool }}"
+  when: tgt_resource_pool != ""
+
+# 1st Powered On VM 
+- name: power on vm using vmware_guest module
+  vmware_guest:
+    hostname: "{{ vc_server_ip }}"
+    username: "{{ vc_username }}"
+    password: "{{ vc_password }}"
+    validate_certs: "{{ vc_validate_certs }}"
+    datacenter: "{{ tgt_datacenter }}"
+    name: "{{ tgt_vm_name }}"
+    state: poweredon
+
+# Pause XX seconds for completion sysprep and shutdow process
+## NEED TO ADJUST
+- pause: seconds=120
+
+# Do Sysprep
+- name: do sysprep with vm shutdown
+  vmware_vm_shell:
+    hostname: "{{ vc_server_ip }}"
+    username: "{{ vc_username }}"
+    password: "{{ vc_password }}"
+    validate_certs: "{{ vc_validate_certs }}"
+    datacenter: "{{ tgt_datacenter }}"
+    vm_id: "{{ tgt_vm_name }}"
+    vm_username: "{{ vmwin_adminuser }}"
+    vm_password: "{{ vmwin_adminpassword }}"
+    vm_shell: "{{ vmwin_powershellpath }}"
+    vm_shell_args: '-Command (Start-Process C:\Windows\System32\Sysprep\sysprep.exe -ArgumentList \"/generalize /oobe /shutdown /unattend:{{ vmwin_sysprep_rspfile }}\")'
+  when: sysprep_rspfile != ""
+
+# Pause XX seconds for completion sysprep and shutdow process
+## NEED TO ADJUST
+- pause: seconds=180
+
+# 2nd Powered On VM after Sysprep
+- name: power on vm using vmware_guest module
+  vmware_guest:
+    hostname: "{{ vc_server_ip }}"
+    username: "{{ vc_username }}"
+    password: "{{ vc_password }}"
+    validate_certs: "{{ vc_validate_certs }}"
+    datacenter: "{{ tgt_datacenter }}"
+    name: "{{ tgt_vm_name }}"
+    state: poweredon
+
+# Pause XX seconds for completion booting VM
+## NEED TO ADJUST
+- pause: seconds=180
+
+# Remove Original IP Setting
+- name: remove original IP setting
+  vmware_vm_shell:
+    hostname: "{{ vc_server_ip }}"
+    username: "{{ vc_username }}"
+    password: "{{ vc_password }}"
+    validate_certs: "{{ vc_validate_certs }}"
+    datacenter: "{{ tgt_datacenter }}"
+    vm_id: "{{ tgt_vm_name }}"
+    vm_username: "{{ vmwin_adminuser }}"
+    vm_password: "{{ vmwin_adminpassword }}"
+    vm_shell: "{{ vmwin_powershellpath }}"
+    vm_shell_args: '-Command (Remove-NetIPAddress -InterfaceAlias {{ vmwin_ethernet_alias }} -AddressFamily IPv4 -IPAddress {{ vmwin_org_ip_address }} -PrefixLength {{ vmwin_org_ip_prefixlength }} -DefaultGateway {{ vmwin_org_ip_gateway }}  -Confirm:$false )'
+
+# Pause 5 seconds for next action
+- pause: seconds=5
+
+# Set New IP Setting
+- name: set new IP setting
+  vmware_vm_shell:
+    hostname: "{{ vc_server_ip }}"
+    username: "{{ vc_username }}"
+    password: "{{ vc_password }}"
+    validate_certs: "{{ vc_validate_certs }}"
+    datacenter: "{{ tgt_datacenter }}"
+    vm_id: "{{ tgt_vm_name }}"
+    vm_username: "{{ vmwin_adminuser }}"
+    vm_password: "{{ vmwin_adminpassword }}"
+    vm_shell: "{{ vmwin_powershellpath }}"
+    vm_shell_args: '-Command (New-NetIPAddress -InterfaceAlias {{ vmwin_ethernet_alias }} -AddressFamily IPv4 -IPAddress {{ vmwin_ip_address }} -PrefixLength {{ vmwin_ip_prefixlength }} -DefaultGateway {{ vmwin_ip_gateway }} )'
+
+# Set VM NIC to Start Connected
+- name: set vm nic to start connected
+  vmware_guest:
+    hostname: "{{ vc_server_ip }}"
+    username: "{{ vc_username }}"
+    password: "{{ vc_password }}"
+    validate_certs: "{{ vc_validate_certs }}"
+    datacenter: "{{ tgt_datacenter }}"
+    name: "{{ tgt_vm_name }}"
+    networks:
+      - name: "{{ tgt_vm_network }}"
+        start_connected: True
+
+# Change Computer Name
+- name: change computer name to target vm name
+  vmware_vm_shell:
+    hostname: "{{ vc_server_ip }}"
+    username: "{{ vc_username }}"
+    password: "{{ vc_password }}"
+    validate_certs: "{{ vc_validate_certs }}"
+    datacenter: "{{ tgt_datacenter }}"
+    vm_id: "{{ tgt_vm_name }}"
+    vm_username: "{{ vmwin_adminuser }}"
+    vm_password: "{{ vmwin_adminpassword }}"
+    vm_shell: "{{ vmwin_powershellpath }}"
+    vm_shell_args: '-Command (Rename-Computer -NewName {{ tgt_vm_name }} -Force )'
+
+# Shutdown VM for Network Connection
+- name: shutdown vm for network connection
+  vmware_guest:
+    hostname: "{{ vc_server_ip }}"
+    username: "{{ vc_username }}"
+    password: "{{ vc_password }}"
+    validate_certs: "{{ vc_validate_certs }}"
+    datacenter: "{{ tgt_datacenter }}"
+    name: "{{ tgt_vm_name }}"
+    state: shutdownguest
+
+# Pause XX seconds for completion booting VM
+## NEED TO ADJUST
+- pause: seconds=120
+
+# Powered On VM for Network Connection
+- name: powered on vm for network connection
+  vmware_guest:
+    hostname: "{{ vc_server_ip }}"
+    username: "{{ vc_username }}"
+    password: "{{ vc_password }}"
+    validate_certs: "{{ vc_validate_certs }}"
+    datacenter: "{{ tgt_datacenter }}"
+    name: "{{ tgt_vm_name }}"
+    state: poweredon
+
+# Pause XX seconds for completion booting VM
+## NEED TO ADJUST
+- pause: seconds=120
+
+# Join to AD domian
+- name: join to AD domain
+  vmware_vm_shell:
+    hostname: "{{ vc_server_ip }}"
+    username: "{{ vc_username }}"
+    password: "{{ vc_password }}"
+    validate_certs: "{{ vc_validate_certs }}"
+    datacenter: "{{ tgt_datacenter }}"
+    vm_id: "{{ tgt_vm_name }}"
+    vm_username: "{{ vmwin_adminuser }}"
+    vm_password: "{{ vmwin_adminpassword }}"
+    vm_shell: "{{ vmwin_powershellpath }}"
+    vm_shell_args: '-Command "& {$pwd = ConvertTo-SecureString -AsPlainText -Force \"{{ vmwin_ad_adminpassword }}\" ; $cred = New-Object System.Management.Automation.PSCredential(\"{{ vmwin_ad_domain }}\{{ vmwin_ad_adminuser }}\",$pwd) ; Add-Computer -Domain {{ vmwin_ad_domain }} -Credential $cred ; Restart-Computer}"'
+  when: vmwin_ad_domain != ""
+
+# Pause XX seconds for completion booting VM
+## NEED TO ADJUST
+- pause: seconds=120
+
+# Set Windows License Key to VM
+- name: set windows license key to vm
+  vmware_vm_shell:
+    hostname: "{{ vc_server_ip }}"
+    username: "{{ vc_username }}"
+    password: "{{ vc_password }}"
+    validate_certs: "{{ vc_validate_certs }}"
+    datacenter: "{{ tgt_datacenter }}"
+    vm_id: "{{ tgt_vm_name }}"
+    vm_username: "{{ vmwin_adminuser }}"
+    vm_password: "{{ vmwin_adminpassword }}"
+    vm_shell: "{{ vmwin_powershellpath }}"
+    vm_shell_args: '-Command (slmgr /ipk {{ vmwin_license_key }})'
+  when: vmwin_license_key != ""
+
+# Pause 5 seconds for next action
+- pause: seconds=5
+
+# Activate Windows License Key to VM
+- name: activate windows license key to vm
+  vmware_vm_shell:
+    hostname: "{{ vc_server_ip }}"
+    username: "{{ vc_username }}"
+    password: "{{ vc_password }}"
+    validate_certs: "{{ vc_validate_certs }}"
+    datacenter: "{{ tgt_datacenter }}"
+    vm_id: "{{ tgt_vm_name }}"
+    vm_username: "{{ vmwin_adminuser }}"
+    vm_password: "{{ vmwin_adminpassword }}"
+    vm_shell: "{{ vmwin_powershellpath }}"
+    vm_shell_args: '-Command (slmgr /ato)'
+  when: vmwin_license_key != ""
