@@ -60,7 +60,7 @@
     vm_password: "{{ vmwin_adminpassword }}"
     vm_shell: "{{ vmwin_powershellpath }}"
     vm_shell_args: '-Command (Start-Process C:\Windows\System32\Sysprep\sysprep.exe -ArgumentList \"/generalize /oobe /shutdown /unattend:{{ vmwin_sysprep_rspfile }}\")'
-  when: sysprep_rspfile != ""
+  when: vmwin_sysprep_rspfile != ""
 
 # Pause XX seconds for completion sysprep and shutdow process
 ## NEED TO ADJUST
