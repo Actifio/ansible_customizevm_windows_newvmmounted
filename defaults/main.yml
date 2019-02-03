@@ -37,15 +37,6 @@ vmwin_sysprep_rspfile: ''
 # Source VM Windows Ethernet Adapter Alias Name
 vmwin_ethernet_alias: ''
 
-# Original VM Windows IP Address
-vmwin_org_ip_address: ''
-
-# Original VM Windows Netmask Length
-vmwin_org_ip_prefixlength: ''
-
-# Original VM Windows Gateway
-vmwin_org_ip_gateway: ''
-
 # New VM Windows IP Address
 vmwin_ip_address: ''
 

@@ -37,9 +37,6 @@ Following variables are accepted/required for this role.
 | vmwin_powershellpath | Powershell comand path of the target Windows VM. Default is 'C:\Windows\System32\WindowsPowershell\v1.0\powershell.exe'. | Y
 | vmwin_sysprep_respfile     | Sysprep response file path within VM. If not specify this value, the role will skip doing sysprep. | N
 | vmwin_ethernet_alias  | Ethernet alias name of the target Windows VM which will be connected the new network with new IP address. | Y
-| vmwin_org_ip_address  | Original IP address of the target Windows VM. | Y
-| vmwin_org_ip_prefixlength  | Original IP prefix length (netmask) of the target Windows VM. | Y
-| vmwin_org_ip_gateway  | Original IP gateway address of the target Windows VM. | Y
 | vmwin_ip_address  | New IP address of the target Windows VM. | Y
 | vmwin_ip_prefixlength  | New IP prefix length (netmask) of the target Windows VM. | Y
 | vmwin_ip_gateway  | New IP gateway address of the target Windows VM. | Y
